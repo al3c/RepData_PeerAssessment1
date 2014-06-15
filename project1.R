@@ -94,28 +94,3 @@ imp_median <- median(tapply(activity_imp$steps, activity_imp$date, sum),
                      na.rm = TRUE)
 
 ## plotting weekday vs weekend
-
- <- function(tbl) {
-    activity_imp$weekday <- as.factor(weekdays(activity_imp$date))
-    weekend_data <- subset(activity_imp, 
-                           weekday %in% c("Saturday", "Sunday"))
-    weekday_data <- subset(activity_imp, 
-                           !weekday %in% c("Saturday", "Sunday"))
-    
-    weekend_spi <- calc_steps_per_interval(weekend_data)
-    weekday_spi <- calc_steps_per_interval(weekday_data)
-    
-    weekend_spi$dayofweek <- rep("weekend", nrow(weekend_spi))
-    weekday_spi$dayofweek <- rep("weekday", nrow(weekday_spi))
-    
-    day_of_week_data <- rbind(weekend_spi, weekday_spi)
-    day_of_week_data$dayofweek <- as.factor(day_of_week_data$dayofweek)
-    day_of_week_data
-}
-plot_day_of_week_comparison <- function(dow_data) {
-    ggplot(dow_data, aes(x = interval, y = steps)) + geom_line(color = "steelblue", 
-                                                               size = 1) + facet_wrap(~dayofweek, nrow = 2, ncol = 1) + labs(x = "Interval", 
-                                                                                                                             y = "Number of steps") + theme_bw()
-}
-day_of_week_data <- calc_day_of_week_data(complete_tbl)
-plot_day_of_week_comparison(day_of_week_data)
