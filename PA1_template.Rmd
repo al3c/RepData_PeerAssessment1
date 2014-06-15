@@ -3,18 +3,99 @@
 
 ## Loading and preprocessing the data
 
-
+```{r, echo=TRUE}
+library(ggplot2)
+library(lubridate)
+activity <- read.csv("activity.csv")
+summary(activity)
+activity$date = as.Date(activity$date)
+unique(activity$date)
+```
 
 ## What is mean total number of steps taken per day?
 
+```{r, echo=TRUE}
+tot_steps <- tapply(activity$steps, activity$date, sum)
+qplot(tot_steps, main = "Total steps taken per day",
+       xlab = "Total steps", ylab = "Count", margins = T)
 
+## calculate the mean and median total number of steps taken per day
+act_mean <- mean(tapply(activity$steps, activity$date, sum), 
+                 na.rm = TRUE)
+act_median <- median(tapply(activity$steps, activity$date, sum), 
+                     na.rm = TRUE)
+act_mean
+act_median
+## mean is 10766.19, median is 10765
+```
 
 ## What is the average daily activity pattern?
 
-
+```{r, echo=TRUE}
+intervals <- unique(activity$interval)
+avgsteps <- tapply(activity$steps, activity$interval, mean, na.rm = T)
+interval_data <- data.frame(intervals, avgsteps)
+with(interval_data, plot(intervals, avgsteps, 
+                         main = "Average daily steps per interval", 
+                         ylab = "average steps", type = "l"))
+max_index <- as.numeric(which.max(interval_data$avgsteps))
+interval_data[max_index,]
+## the 835 interval has the most with 206 steps
+```
 
 ## Imputing missing values
 
+First calulating the total number of NAs:
+```{r, echo=TRUE}
+table(is.na(activity$steps))
+```
 
+For missing values, replacing them with the mean at that same interval, as I am assuming that activities follow a daily pattern.
+```{r, echo=TRUE}
+steps_per <- aggregate(activity$steps, 
+                       by = list(interval = activity$interval), 
+                       mean, na.rm = T)
+# convert to integers for plotting
+steps_per$interval <- as.integer(levels(steps_per$interval)
+                                [steps_per$interval])
+colnames(steps_per) <- c("interval", "steps")
 
-## Are there differences in activity patterns between weekdays and weekends?
+means_replace <- function(activity, defaults) {
+    na_indices <- which(is.na(activity$steps))
+    defaults <- steps_per
+    na_repl <- unlist(lapply(na_indices, 
+                                     FUN = function(ind) {
+        interval = activity[ind, ]$interval
+        defaults[defaults$interval == interval, ]$steps
+    }))
+    new_steps <- activity$steps
+    new_steps[na_indices] <- na_repl
+    new_steps
+}
+activity_imp <- data.frame(steps = means_replace(activity, avgsteps), 
+                           date = activity$date, 
+                           interval = activity$interval)
+
+summary(activity_imp)
+```
+
+Plotting new dataset with inserted steps:
+```{r, echo=TRUE}
+intervals <- unique(activity_imp$interval)
+avgsteps <- tapply(activity_imp$steps, activity_imp$interval, 
+                   mean, na.rm = T)
+interval_data_imp <- data.frame(intervals, avgsteps)
+with(interval_data_imp, plot(intervals, avgsteps, 
+                         main = "Average daily steps per interval", 
+                         ylab = "average steps", type = "l")) 
+```
+
+Calculating the new mean and median
+```{r, echo=TRUE}
+imp_mean <- mean(tapply(activity_imp$steps, activity_imp$date, sum), 
+                 na.rm = TRUE)
+imp_median <- median(tapply(activity_imp$steps, activity_imp$date, sum), 
+                     na.rm = TRUE)
+imp_mean
+imp_median
+```
