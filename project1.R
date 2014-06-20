@@ -11,16 +11,20 @@ activity <- read.csv("activity.csv")
 str(activity)
 ## 3 variables: steps (integer), date (factor), interval (integer)
 summary(activity)
-
+## format the colums appropriatley - dates as dates; interval 
+## as a factor
 activity$date = as.Date(activity$date)
-unique(activity$date)
-## sample size is 61 days
+unique(activity$date) ## sample size is 61 days
+activity$interval = factor(activity$interval)
 
 ## plot a histogram of the total steps taken each day
 tot_steps <- tapply(activity$steps, activity$date, sum)
 qplot(tot_steps, main = "Total steps taken per day",
-       xlab = "Total steps", ylab = "Count", margins = T)
+        xlab = "Total steps", ylab = "Count", margins = T) +
+  geom_histogram(fill = "steelblue")
 
+## ggplot(tot_steps, aes(x = steps)) +
+##   geom_histogram(fill = "steelblue", binwidth = 1500)
 ## calculate the mean and median total number of steps taken per day
 act_mean <- mean(tapply(activity$steps, activity$date, sum), 
                  na.rm = TRUE)
